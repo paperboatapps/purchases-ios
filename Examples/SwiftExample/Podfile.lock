@@ -1,16 +1,25 @@
 PODS:
+  - mParticle-Apple-SDK (7.15.11):
+    - mParticle-Apple-SDK/mParticle (= 7.15.11)
+  - mParticle-Apple-SDK/mParticle (7.15.11)
   - Purchases (3.4.0-SNAPSHOT)
 
 DEPENDENCIES:
+  - mParticle-Apple-SDK (~> 7.0)
   - Purchases (from `../../`)
+
+SPEC REPOS:
+  trunk:
+    - mParticle-Apple-SDK
 
 EXTERNAL SOURCES:
   Purchases:
     :path: "../../"
 
 SPEC CHECKSUMS:
+  mParticle-Apple-SDK: b550ebef113bb1369c3604228f252373af4b8896
   Purchases: 0ed262862309e8aa3348b525755c8e84f53b1924
 
-PODFILE CHECKSUM: b6ad00ca1e6fc400e0898ad2ac4a293958616d2e
+PODFILE CHECKSUM: ff9f57f65a1f819b3e26f6b507e9a664c1943728
 
 COCOAPODS: 1.8.4
