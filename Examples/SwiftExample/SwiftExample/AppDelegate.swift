@@ -8,6 +8,7 @@
 
 import UIKit
 import UserNotifications
+import mParticle_Apple_SDK
 import Purchases
 
 @UIApplicationMain
@@ -34,7 +35,9 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         options.environment = .development
         MParticle.sharedInstance().start(with: options)
         
-        
+        if let attributionInfo = MParticle.sharedInstance().attributionInfo() {
+            Purchases.addAttributionData(attributionInfo, from: .mParticle)
+        }
         return true
     }
     
