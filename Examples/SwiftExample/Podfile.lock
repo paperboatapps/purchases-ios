@@ -1,16 +1,23 @@
 PODS:
-  - Purchases (3.5.0-SNAPSHOT)
+  - Purchases (3.6.0-SNAPSHOT):
+    - TPInAppReceipt
+  - TPInAppReceipt (2.6)
 
 DEPENDENCIES:
   - Purchases (from `../../`)
+
+SPEC REPOS:
+  trunk:
+    - TPInAppReceipt
 
 EXTERNAL SOURCES:
   Purchases:
     :path: "../../"
 
 SPEC CHECKSUMS:
-  Purchases: a7ec2fa5d18658bd6fddd0eb9eb6d2e2d3aea6c8
+  Purchases: 51acc6e4f4860b2ab954cf0788d4b7f2734d183c
+  TPInAppReceipt: 24335d4b3f9d032ff62ac7aed0ca7b6b780811cf
 
 PODFILE CHECKSUM: 0b953383523796d33de4db49d07a5c6e3a56c27e
 
-COCOAPODS: 1.9.1
+COCOAPODS: 1.9.3
