@@ -1,6 +1,6 @@
 Pod::Spec.new do |s|
   s.name             = "Purchases"
-  s.version          = "3.6.0-SNAPSHOT"
+  s.version          = "3.10.0-SNAPSHOT"
   s.summary          = "Subscription and in-app-purchase backend service."
 
   s.description      = <<-DESC
@@ -14,6 +14,7 @@ Pod::Spec.new do |s|
   s.documentation_url = "https://docs.revenuecat.com/"
 
   s.framework      = 'StoreKit'
+  s.swift_version       = '5.0'
 
   s.ios.deployment_target = '9.0'
   s.osx.deployment_target = '10.12'
@@ -21,10 +22,10 @@ Pod::Spec.new do |s|
   s.tvos.deployment_target = '9.0'
 
   s.pod_target_xcconfig = { 'DEFINES_MODULE' => 'YES' }
+  s.dependency 'PurchasesCoreSwift', '3.10.0-SNAPSHOT'
 
-  s.source_files = ['Purchases/**/*.{swift,h,m}']
 
-
+  s.source_files = ['Purchases/**/*.{h,m}']
   s.public_header_files = [
     'Purchases/Public/*.h'
   ]

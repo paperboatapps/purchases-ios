@@ -16,6 +16,7 @@ import Purchases
 class BackendTests: XCTestCase {
     struct HTTPRequest {
         let HTTPMethod: String
+        let serially: Bool
         let path: String
         let body: [AnyHashable : Any]?
         let headers: [String: String]?
@@ -34,11 +35,20 @@ class BackendTests: XCTestCase {
 
         var shouldFinish = true
 
-        override func performRequest(_ HTTPMethod: String, path: String, body requestBody: [AnyHashable : Any]?, headers: [String : String]?, completionHandler: RCHTTPClientResponseHandler? = nil) {
+        override func performRequest(_ HTTPMethod: String,
+                                     serially: Bool,
+                                     path: String,
+                                     body requestBody: [AnyHashable : Any]?,
+                                     headers: [String : String]?,
+                                     completionHandler: RCHTTPClientResponseHandler? = nil) {
             assert(mocks[path] != nil, "Path " + path + " not mocked")
             let response = mocks[path]!
 
-            calls.append(HTTPRequest(HTTPMethod: HTTPMethod, path: path, body: requestBody, headers: headers))
+            calls.append(HTTPRequest(HTTPMethod: HTTPMethod,
+                                     serially: serially,
+                                     path: path,
+                                     body: requestBody,
+                                     headers: headers))
 
             if shouldFinish {
                 DispatchQueue.main.async {
@@ -105,7 +115,7 @@ class BackendTests: XCTestCase {
             completionCalled = true
         })
 
-        let expectedCall = HTTPRequest(HTTPMethod: "POST", path: "/receipts", body: [
+        let expectedCall = HTTPRequest(HTTPMethod: "POST", serially: true, path: "/receipts", body: [
             "app_user_id": userID,
             "fetch_token": receiptData.base64EncodedString(),
             "is_restore": isRestore,
@@ -374,7 +384,7 @@ class BackendTests: XCTestCase {
             "observer_mode": false
         ]
 
-        let expectedCall = HTTPRequest(HTTPMethod: "POST", path: "/receipts",
+        let expectedCall = HTTPRequest(HTTPMethod: "POST", serially: true, path: "/receipts",
                                        body: body , headers: ["Authorization": "Bearer " + apiKey])
 
         expect(self.httpClient.calls.count).to(equal(1))
@@ -970,7 +980,31 @@ class BackendTests: XCTestCase {
         expect(receivedUnderlyingError).toEventuallyNot(beNil())
         expect(receivedUnderlyingError?.localizedDescription).to(equal(serverErrorResponse["message"]))
     }
-    
+
+    func testGetOfferingsSkipsBackendCallIfAppUserIDIsEmpty() {
+        var completionCalled = false
+
+        backend?.getOfferingsForAppUserID("", completion: { (offerings, error) in
+            completionCalled = true
+        })
+
+        expect(completionCalled).toEventually(beTrue())
+        expect(self.httpClient.calls).to(beEmpty())
+    }
+
+    func testGetOfferingsCallsCompletionWithErrorIfAppUserIDIsEmpty() {
+        var completionCalled = false
+        var receivedError: Error? = nil
+
+        backend?.getOfferingsForAppUserID("", completion: { (offerings, error) in
+            completionCalled = true
+            receivedError = error
+        })
+
+        expect(completionCalled).toEventually(beTrue())
+        expect((receivedError! as NSError).code) == Purchases.ErrorCode.invalidAppUserIdError.rawValue
+    }
+
     func testDoesntCacheForDifferentDiscounts() {
         let response = HTTPResponse(statusCode: 200, response: validSubscriberResponse, error: nil)
         httpClient.mock(requestPath: "/receipts", response: response)
@@ -1056,16 +1090,24 @@ class BackendTests: XCTestCase {
             "product_id": productIdentifier,
             "price": price,
             "currency": currencyCode,
-            "subscription_group_id": group,
+            "subscription_group_id": group
+        ]
+        let bodyWithOffers = body.merging([
             "offers": [
                 "offer_identifier": "offerid",
                 "price": 12,
                 "payment_mode": 0
             ]
-        ]
-        
-        let expectedCall = HTTPRequest(HTTPMethod: "POST", path: "/receipts",
+        ]) { _, new in new }
+
+        var expectedCall: HTTPRequest
+        if #available(iOS 12.2, macOS 10.14.4, *) {
+            expectedCall = HTTPRequest(HTTPMethod: "POST", serially: true, path: "/receipts",
+                                       body: bodyWithOffers , headers: ["Authorization": "Bearer " + apiKey])
+        } else {
+            expectedCall = HTTPRequest(HTTPMethod: "POST", serially: true, path: "/receipts",
                                        body: body , headers: ["Authorization": "Bearer " + apiKey])
+        }
         
         expect(self.httpClient.calls.count).to(equal(1))
         
@@ -1074,10 +1116,11 @@ class BackendTests: XCTestCase {
             
             expect(call.path).to(equal(expectedCall.path))
             expect(call.HTTPMethod).to(equal(expectedCall.HTTPMethod))
-            XCTAssert(call.body!.keys == expectedCall.body!.keys)
-            
+
             expect(call.headers?["Authorization"]).toNot(beNil())
             expect(call.headers?["Authorization"]).to(equal(expectedCall.headers?["Authorization"]))
+
+            expect(call.body!.keys) == expectedCall.body!.keys
         }
         
         expect(completionCalled).toEventually(beTrue())
@@ -1093,7 +1136,7 @@ class BackendTests: XCTestCase {
                     "signature_data": [
                         "signature": "Base64 encoded signature",
                         "nonce": "A UUID",
-                        "timestamp": 123413232131
+                        "timestamp": Int64(123413232131)
                     ],
                     "signature_error": nil
                 ]
@@ -1128,7 +1171,7 @@ class BackendTests: XCTestCase {
             ]
         ]
 
-        let expectedCall = HTTPRequest(HTTPMethod: "POST", path: "/offers",
+        let expectedCall = HTTPRequest(HTTPMethod: "POST", serially: true, path: "/offers",
                 body: body, headers: ["Authorization": "Bearer " + apiKey])
 
         expect(self.httpClient.calls.count).to(equal(1))

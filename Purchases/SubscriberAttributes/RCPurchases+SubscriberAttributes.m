@@ -9,6 +9,9 @@
 #import "RCCrossPlatformSupport.h"
 #import "RCLogUtils.h"
 #import "NSError+RCExtensions.h"
+#import "RCOffering.h"
+#import "RCOfferings.h"
+@import PurchasesCoreSwift;
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -17,43 +20,16 @@ NS_ASSUME_NONNULL_BEGIN
 
 #pragma mark protected methods
 
-- (void)_setAttributes:(NSDictionary<NSString *, NSString *> *)attributes {
-    RCDebugLog(@"setAttributes called");
-    [self.subscriberAttributesManager setAttributes:attributes appUserID:self.appUserID];
-}
-
-- (void)_setEmail:(nullable NSString *)email {
-    RCDebugLog(@"setEmail called");
-    [self.subscriberAttributesManager setEmail:email appUserID:self.appUserID];
-}
-
-- (void)_setPhoneNumber:(nullable NSString *)phoneNumber {
-    RCDebugLog(@"setPhoneNumber called");
-    [self.subscriberAttributesManager setPhoneNumber:phoneNumber appUserID:self.appUserID];
-}
-
-- (void)_setDisplayName:(nullable NSString *)displayName {
-    RCDebugLog(@"setDisplayName called");
-    [self.subscriberAttributesManager setDisplayName:displayName appUserID:self.appUserID];
-}
-
-- (void)_setPushToken:(nullable NSData *)pushToken {
-    RCDebugLog(@"setPushToken called");
-    [self.subscriberAttributesManager setPushToken:pushToken appUserID:self.appUserID];
-}
-
-- (void)_setPushTokenString:(nullable NSString *)pushToken {
-    RCDebugLog(@"setPushTokenString called");
-    [self.subscriberAttributesManager setPushTokenString:pushToken appUserID:self.appUserID];
-}
-
-- (void)configureSubscriberAttributesManager {
-    [self subscribeToAppDidBecomeActiveNotifications];
-    [self subscribeToAppBackgroundedNotifications];
-}
-
 - (RCSubscriberAttributeDict)unsyncedAttributesByKey {
-    return [self.subscriberAttributesManager unsyncedAttributesByKeyForAppUserID:self.appUserID];
+    NSString *appUserID = self.appUserID;
+    RCSubscriberAttributeDict unsyncedAttributes = [self.subscriberAttributesManager
+                                                    unsyncedAttributesByKeyForAppUserID:appUserID];
+    RCDebugLog(RCStrings.attribution.unsynced_attributes_count, (unsigned long)unsyncedAttributes.count, appUserID);
+    if (unsyncedAttributes.count > 0) {
+        RCDebugLog(RCStrings.attribution.unsynced_attributes, unsyncedAttributes);
+    }
+
+    return unsyncedAttributes;
 }
 
 - (void)markAttributesAsSyncedIfNeeded:(nullable RCSubscriberAttributeDict)syncedAttributes
@@ -64,29 +40,15 @@ NS_ASSUME_NONNULL_BEGIN
     }
 
     if (error.subscriberAttributesErrors) {
-        RCLog(@"Subscriber attributes errors: %@", error.subscriberAttributesErrors);
+        RCErrorLog(RCStrings.attribution.subscriber_attributes_error, error.subscriberAttributesErrors);
     }
     [self.subscriberAttributesManager markAttributesAsSynced:syncedAttributes appUserID:appUserID];
 }
 
-#pragma mark private methods
-
-- (void)subscribeToAppDidBecomeActiveNotifications {
-    [self.notificationCenter addObserver:self
-                                selector:@selector(syncSubscriberAttributesIfNeeded)
-                                    name:APP_DID_BECOME_ACTIVE_NOTIFICATION_NAME
-                                  object:nil];
-}
-
-- (void)subscribeToAppBackgroundedNotifications {
-    [self.notificationCenter addObserver:self
-                                selector:@selector(syncSubscriberAttributesIfNeeded)
-                                    name:APP_WILL_RESIGN_ACTIVE_NOTIFICATION_NAME
-                                  object:nil];
-}
-
 - (void)syncSubscriberAttributesIfNeeded {
-    [self.subscriberAttributesManager syncAttributesForAllUsersWithCurrentAppUserID:self.appUserID];
+    [self.operationDispatcher dispatchOnWorkerThreadWithRandomDelay:NO block:^{
+        [self.subscriberAttributesManager syncAttributesForAllUsersWithCurrentAppUserID:self.appUserID];
+    }];
 }
 
 @end

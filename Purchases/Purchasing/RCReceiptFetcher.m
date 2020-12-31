@@ -8,6 +8,7 @@
 
 #import "RCReceiptFetcher.h"
 #import "RCLogUtils.h"
+@import PurchasesCoreSwift;
 #import "RCSystemInfo.h"
 
 @implementation RCReceiptFetcher : NSObject
@@ -22,7 +23,9 @@
     // correct receipt.
     // This has been filed as radar FB7699277. More info in https://github.com/RevenueCat/purchases-ios/issues/207.
     
-    if (RCSystemInfo.isSandbox) {
+    NSOperatingSystemVersion minimumOSVersionWithoutBug = { .majorVersion = 7, .minorVersion = 0, .patchVersion = 0 };
+    BOOL isBelowMinimumOSVersionWithoutBug = ![NSProcessInfo.processInfo isOperatingSystemAtLeastVersion:minimumOSVersionWithoutBug];
+    if (isBelowMinimumOSVersionWithoutBug && RCSystemInfo.isSandbox) {
         NSString *receiptURLFolder = [[receiptURL absoluteString] stringByDeletingLastPathComponent];
         NSURL *productionReceiptURL = [NSURL URLWithString:[receiptURLFolder stringByAppendingPathComponent:@"receipt"]];
         receiptURL = productionReceiptURL;
@@ -30,7 +33,7 @@
 #endif
     
     NSData *data = [NSData dataWithContentsOfURL:receiptURL];
-    RCDebugLog(@"Loaded receipt from %@", receiptURL);
+    RCDebugLog(RCStrings.receipt.loaded_receipt, receiptURL);
     return data;
 }
 

@@ -1,3 +1,160 @@
+## 3.9.2
+- Fixed issues when compiling with Xcode 11 or earlier
+    https://github.com/RevenueCat/purchases-ios/pull/416
+- Fixed termination warnings for finished SKRequests
+    https://github.com/RevenueCat/purchases-ios/pull/418
+- Fixed CI deploy bugs
+    https://github.com/RevenueCat/purchases-ios/pull/421
+- Prevents unnecessary backend calls when the appUserID is an empty string
+    https://github.com/RevenueCat/purchases-ios/pull/414
+- Prevents unnecessary POST requests when the JSON body can't be correctly formed
+    https://github.com/RevenueCat/purchases-ios/pull/415
+- Updates git commit pointer for SPM Integration tests
+    https://github.com/RevenueCat/purchases-ios/pull/412
+
+## 3.9.1
+- Added support for `SKPaymentQueue`'s `didRevokeEntitlementsForProductIdentifiers:`, so entitlements are automatically revoked from a family-shared purchase when a family member leaves or the subscription is canceled.
+    https://github.com/RevenueCat/purchases-ios/pull/413
+- Added support for automated deploys
+    https://github.com/RevenueCat/purchases-ios/pull/411
+- Fixed Xcode direct integration failing on Mac Catalyst builds
+    https://github.com/RevenueCat/purchases-ios/pull/419
+
+## 3.9.0
+- Added support for StoreKit Config Files and StoreKitTest testing
+    https://github.com/RevenueCat/purchases-ios/pull/407
+- limit running integration tests to tags and release branches
+    https://github.com/RevenueCat/purchases-ios/pull/406
+- added deployment checks
+    https://github.com/RevenueCat/purchases-ios/pull/404
+
+## 3.8.0
+- Added a silent version of restoreTransactions, called `syncPurchases`, meant to be used by developers performing migrations for other systems.
+    https://github.com/RevenueCat/purchases-ios/pull/387
+    https://github.com/RevenueCat/purchases-ios/pull/403
+- Added `presentCodeRedemptionSheet`, which allows apps to present code redemption sheet for offer codes
+    https://github.com/RevenueCat/purchases-ios/pull/400
+- Fixed sample app on macOS, which would fail to build because the watchOS app was embedded into it
+    https://github.com/RevenueCat/purchases-ios/pull/402
+
+## 3.7.6
+- Fixed a race condition that could cause a crash after deleting and reinstalling the app
+    https://github.com/RevenueCat/purchases-ios/pull/383
+- Fixed possible overflow when performing local receipt parsing on 32-bit devices
+    https://github.com/RevenueCat/purchases-ios/pull/384
+- Fixed string comparison when deleting synced subscriber attributes
+    https://github.com/RevenueCat/purchases-ios/pull/385
+- Fixed docs-deploy job
+    https://github.com/RevenueCat/purchases-ios/pull/386
+- Fixed a typo in a RCPurchases.h
+    https://github.com/RevenueCat/purchases-ios/pull/380
+
+## 3.7.5
+- Move test dependencies back to carthage
+    https://github.com/RevenueCat/purchases-ios/pull/371
+    https://github.com/RevenueCat/purchases-ios/pull/373
+- fixed tests for iOS < 12.2
+    https://github.com/RevenueCat/purchases-ios/pull/372
+- Make cocoapods linking dynamic again
+    https://github.com/RevenueCat/purchases-ios/pull/374
+
+## 3.7.4
+- Fix parsing of dates in receipts with milliseconds
+    https://github.com/RevenueCat/purchases-ios/pull/367
+- Add jitter and extra cache for background processes
+    https://github.com/RevenueCat/purchases-ios/pull/366
+- Skip install to fix archives with direct integration
+    https://github.com/RevenueCat/purchases-ios/pull/364
+
+## 3.7.3
+- Renames files with names that caused issues when building on Windows
+    https://github.com/RevenueCat/purchases-ios/pull/362
+- Fixes crash when parsing receipts with an unexpected number of internal containers in an IAP ASN.1 Container
+    https://github.com/RevenueCat/purchases-ios/pull/360
+- Fixes crash when sending `NSNull` attributes to `addAttributionData:fromNetwork:`
+    https://github.com/RevenueCat/purchases-ios/pull/359
+- Added starter string constants file for logging
+    https://github.com/RevenueCat/purchases-ios/pull/339
+
+## 3.7.2
+- Updates the Pod to make it compile as a static framework, fixing build issues on hybrid SDKs. Cleans up imports in `RCPurchases.h`.
+    https://github.com/RevenueCat/purchases-ios/pull/353
+- Fixes Catalyst builds and build warnings
+    https://github.com/RevenueCat/purchases-ios/pull/352
+    https://github.com/RevenueCat/purchases-ios/pull/351
+
+## 3.7.1
+-  Fix 'Invalid bundle' validation error when uploading builds to App Store using Carthage or binary
+    https://github.com/RevenueCat/purchases-ios/pull/346
+
+## 3.7.0
+- Attribution V2:
+        - Deprecated `addAttributionData:fromNetwork:` and `addAttributionData:fromNetwork:forNetworkUserId:` in favor of `setAdjustId`, `setAppsflyerId`, `setFbAnonymousId`, `setMparticleId`
+        - Added support for OneSignal via `setOnesignalId`
+        - Added `setMediaSource`, `setCampaign`, `setAdGroup`, `setAd`, `setKeyword`, `setCreative`, and `collectDeviceIdentifiers`
+    https://github.com/RevenueCat/purchases-ios/pull/321
+    https://github.com/RevenueCat/purchases-ios/pull/340
+    https://github.com/RevenueCat/purchases-ios/pull/331
+- Prevent unnecessary receipt posts
+    https://github.com/RevenueCat/purchases-ios/pull/323
+- Improved migration process for legacy Mac App Store apps moving to Universal Store 
+    https://github.com/RevenueCat/purchases-ios/pull/336
+- Added new SKError codes for Xcode 12
+    https://github.com/RevenueCat/purchases-ios/pull/334
+    https://github.com/RevenueCat/purchases-ios/pull/338
+- Renamed StoreKitConfig schemes
+    https://github.com/RevenueCat/purchases-ios/pull/329
+- Fixed an issue where cached purchaserInfo would be returned after invalidating purchaserInfo cache
+    https://github.com/RevenueCat/purchases-ios/pull/333
+- Fix cocoapods and carthage release scripts 
+    https://github.com/RevenueCat/purchases-ios/pull/324
+- Fixed a bug where `checkIntroTrialEligibility` wouldn't return when calling it from an OS version that didn't support intro offers
+    https://github.com/RevenueCat/purchases-ios/pull/343
+
+## 3.6.0
+- Fixed a race condition with purchase completed callbacks
+	https://github.com/RevenueCat/purchases-ios/pull/313
+- Made RCTransaction public to fix compiling issues on Swift Package Manager
+	https://github.com/RevenueCat/purchases-ios/pull/315
+- Added ability to export XCFrameworks
+	https://github.com/RevenueCat/purchases-ios/pull/317
+- Cleaned up dispatch calls
+	https://github.com/RevenueCat/purchases-ios/pull/318
+- Created a separate module and framework for the Swift code
+	https://github.com/RevenueCat/purchases-ios/pull/319
+- Updated release scripts to be able to release the new Pod as well
+	https://github.com/RevenueCat/purchases-ios/pull/320
+- Added a local receipt parser, updated intro eligibility calculation to perform on device first
+	https://github.com/RevenueCat/purchases-ios/pull/302
+- Fix crash when productIdentifier or payment is nil.
+    https://github.com/RevenueCat/purchases-ios/pull/297
+- Fixes ask-to-buy flow and will now send an error indicating there's a deferred payment.
+    https://github.com/RevenueCat/purchases-ios/pull/296
+- Fixes application state check on app extensions, which threw a compilation error.
+    https://github.com/RevenueCat/purchases-ios/pull/303
+- Restores will now always refresh the receipt.
+    https://github.com/RevenueCat/purchases-ios/pull/287
+- New properties added to the PurchaserInfo to better manage non-subscriptions.
+    https://github.com/RevenueCat/purchases-ios/pull/281
+- Bypass workaround in watchOS 7 that fixes watchOS 6.2 bug where devices report wrong `appStoreReceiptURL`
+	https://github.com/RevenueCat/purchases-ios/pull/330
+- Fix bug where 404s in subscriber attributes POST would mark them as synced
+    https://github.com/RevenueCat/purchases-ios/pull/328
+
+## 3.5.3
+- Addresses an issue where subscriber attributes might not sync correctly if subscriber info for the user hadn't been synced before the subscriber attributes sync was performed.
+    https://github.com/RevenueCat/purchases-ios/pull/327
+
+## 3.5.2
+- Feature/defer cache updates if woken from push notification
+https://github.com/RevenueCat/purchases-ios/pull/288
+
+## 3.5.1
+- Removes all references to ASIdentifierManager and advertisingIdentifier. This should help with some Kids apps being rejected 
+https://github.com/RevenueCat/purchases-ios/pull/286
+- Fix for posting wrong duration P0D on consumables
+https://github.com/RevenueCat/purchases-ios/pull/289
+
 ## 3.5.0
 - Added a sample watchOS app to illustrate how to integrate in-app purchases on watchOS with RevenueCat
 https://github.com/RevenueCat/purchases-ios/pull/263

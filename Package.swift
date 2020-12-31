@@ -26,25 +26,24 @@ func resolveTargets() -> [Target] {
                        "Purchases/Public",
                        "Purchases/Purchasing",
                        "Purchases/ProtectedExtensions",
-                       "Purchases/SubscriberAttributes"]
+                       "Purchases/SubscriberAttributes",
+                       "Purchases/SwiftInterfaces"]
     let infoPlist = "Purchases/Info.plist"
     let swiftSources = "Purchases/SwiftSources"
     
     let baseTargets: [Target] = [
         .target(name: "Purchases",
-                dependencies: ["PurchasesSwift"],
+                dependencies: ["PurchasesCoreSwift"],
                 path: ".",
                 exclude: [infoPlist, swiftSources],
                 sources: ["Purchases"],
                 publicHeadersPath: "Purchases/Public",
                 cSettings: objcSources.map { CSetting.headerSearchPath($0) }
         ),
-        .target(name: "PurchasesSwift",
+        .target(name: "PurchasesCoreSwift",
                 dependencies: [],
                 path: ".",
-                exclude: [infoPlist] + objcSources,
-                sources: ["Purchases"],
-                publicHeadersPath: swiftSources)]
+                sources: ["PurchasesCoreSwift"])]
 
     if shouldTest {
         let testTargets: [Target] = [

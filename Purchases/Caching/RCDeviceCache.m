@@ -8,15 +8,14 @@
 
 #import "RCDeviceCache.h"
 #import "RCDeviceCache+Protected.h"
-#import "RCLogUtils.h"
-
 
 @interface RCDeviceCache ()
 
 @property (nonatomic) NSUserDefaults *userDefaults;
 @property (nonatomic) NSNotificationCenter *notificationCenter;
 @property (nonatomic, nonnull) RCInMemoryCachedObject<RCOfferings *> *offeringsCachedObject;
-@property (nonatomic, nullable) NSDate *purchaserInfoCachesLastUpdated;
+
+@property (nonatomic, assign) BOOL appUserIDHasBeenSet;
 
 @end
 
@@ -26,10 +25,12 @@
 NSString *RCLegacyGeneratedAppUserDefaultsKey = RC_CACHE_KEY_PREFIX @".appUserID";
 NSString *RCAppUserDefaultsKey = RC_CACHE_KEY_PREFIX @".appUserID.new";
 NSString *RCPurchaserInfoAppUserDefaultsKeyBase = RC_CACHE_KEY_PREFIX @".purchaserInfo.";
+NSString *RCPurchaserInfoLastUpdatedKeyBase = RC_CACHE_KEY_PREFIX @".purchaserInfoLastUpdated.";
 NSString *RCLegacySubscriberAttributesKeyBase = RC_CACHE_KEY_PREFIX @".subscriberAttributes.";
 NSString *RCSubscriberAttributesKey = RC_CACHE_KEY_PREFIX @".subscriberAttributes";
-#define CACHE_DURATION_IN_SECONDS 60 * 5
-
+NSString *RCAttributionDataDefaultsKeyBase = RC_CACHE_KEY_PREFIX @".attribution.";
+int cacheDurationInSecondsInForeground = 60 * 5;
+int cacheDurationInSecondsInBackground = 60 * 60 * 24;
 
 @implementation RCDeviceCache
 
@@ -43,8 +44,7 @@ NSString *RCSubscriberAttributesKey = RC_CACHE_KEY_PREFIX @".subscriberAttribute
     self = [super init];
     if (self) {
         if (offeringsCachedObject == nil) {
-            offeringsCachedObject =
-                [[RCInMemoryCachedObject alloc] initWithCacheDurationInSeconds:CACHE_DURATION_IN_SECONDS];
+            offeringsCachedObject = [[RCInMemoryCachedObject alloc] init];
         }
         self.offeringsCachedObject = offeringsCachedObject;
 
@@ -57,6 +57,7 @@ NSString *RCSubscriberAttributesKey = RC_CACHE_KEY_PREFIX @".subscriberAttribute
             userDefaults = NSUserDefaults.standardUserDefaults;
         }
         self.userDefaults = userDefaults;
+        self.appUserIDHasBeenSet = self.cachedAppUserID != nil;
         [self observeAppUserIDChanges];
     }
 
@@ -73,7 +74,7 @@ NSString *RCSubscriberAttributesKey = RC_CACHE_KEY_PREFIX @".subscriberAttribute
 }
 
 - (void)handleUserDefaultsChanged:(NSNotification *)notification {
-    if (notification.object == self.userDefaults) {
+    if (self.appUserIDHasBeenSet && notification.object == self.userDefaults) {
         if (!self.cachedAppUserID) {
             NSAssert(false, @"[Purchases] - Cached appUserID has been deleted from user defaults. "
                             "This leaves the SDK in an undetermined state. Please make sure that RevenueCat "
@@ -98,14 +99,17 @@ NSString *RCSubscriberAttributesKey = RC_CACHE_KEY_PREFIX @".subscriberAttribute
 }
 
 - (void)cacheAppUserID:(NSString *)appUserID {
-    [self.userDefaults setObject:appUserID forKey:RCAppUserDefaultsKey];
+    @synchronized (self) {
+        [self.userDefaults setObject:appUserID forKey:RCAppUserDefaultsKey];
+        self.appUserIDHasBeenSet = YES;
+    }
 }
 
 - (void)clearCachesForAppUserID:(NSString *)oldAppUserID andSaveNewUserID:(NSString *)newUserID {
     @synchronized (self) {
         [self.userDefaults removeObjectForKey:RCLegacyGeneratedAppUserDefaultsKey];
         [self.userDefaults removeObjectForKey:[self purchaserInfoUserDefaultCacheKeyForAppUserID:oldAppUserID]];
-        [self clearPurchaserInfoCacheTimestamp];
+        [self clearPurchaserInfoCacheTimestampForAppUserID:oldAppUserID];
         [self clearOfferingsCache];
 
         [self deleteAttributesIfSyncedForAppUserID:oldAppUserID];
@@ -124,25 +128,57 @@ NSString *RCSubscriberAttributesKey = RC_CACHE_KEY_PREFIX @".subscriberAttribute
     @synchronized (self) {
         [self.userDefaults setObject:data
                               forKey:[self purchaserInfoUserDefaultCacheKeyForAppUserID:appUserID]];
-        [self setPurchaserInfoCacheTimestampToNow];
+        [self setPurchaserInfoCacheTimestampToNowForAppUserID:appUserID];
     }
 }
 
-- (BOOL)isPurchaserInfoCacheStale {
-    NSTimeInterval timeSinceLastCheck = -[self.purchaserInfoCachesLastUpdated timeIntervalSinceNow];
-    return !(self.purchaserInfoCachesLastUpdated != nil && timeSinceLastCheck < CACHE_DURATION_IN_SECONDS);
+- (BOOL)isPurchaserInfoCacheStaleForAppUserID:(NSString *)appUserID isAppBackgrounded:(BOOL)isAppBackgrounded {
+    NSDate * _Nullable purchaserInfoCachesLastUpdated = [self purchaserInfoCachesLastUpdatedForAppUserID:appUserID];
+    if (!purchaserInfoCachesLastUpdated) {
+        return YES;
+    }
+    NSTimeInterval timeSinceLastCheck = -[purchaserInfoCachesLastUpdated timeIntervalSinceNow];
+    int cacheDurationInSeconds = [self cacheDurationInSecondsWithIsAppBackgrounded:isAppBackgrounded];
+    return timeSinceLastCheck >= cacheDurationInSeconds;
 }
 
-- (void)clearPurchaserInfoCacheTimestamp {
-    self.purchaserInfoCachesLastUpdated = nil;
+- (int)cacheDurationInSecondsWithIsAppBackgrounded:(BOOL)isAppBackgrounded {
+    return (isAppBackgrounded ? cacheDurationInSecondsInBackground
+                              : cacheDurationInSecondsInForeground);
 }
 
-- (void)setPurchaserInfoCacheTimestampToNow {
-    self.purchaserInfoCachesLastUpdated = [NSDate date];
+- (void)clearPurchaserInfoCacheTimestampForAppUserID:(NSString *)appUserID {
+    NSString *cacheKey = [self purchaserInfoLastUpdatedCacheKeyForAppUserID:appUserID];
+    [self.userDefaults removeObjectForKey:cacheKey];
+}
+
+- (void)clearPurchaserInfoCacheForAppUserID:(NSString *)appUserID {
+    @synchronized (self) {
+        [self clearPurchaserInfoCacheTimestampForAppUserID:appUserID];
+        [self.userDefaults removeObjectForKey:[self purchaserInfoUserDefaultCacheKeyForAppUserID:appUserID]];
+    }
+}
+
+- (void)setPurchaserInfoCacheTimestampToNowForAppUserID:(NSString *)appUserID {
+    [self setPurchaserInfoCacheTimestamp:[NSDate date] forAppUserID:appUserID];
+}
+
+- (void)setPurchaserInfoCacheTimestamp:(NSDate *)timestamp forAppUserID:(NSString *)appUserID {
+    NSString *cacheKey = [self purchaserInfoLastUpdatedCacheKeyForAppUserID:appUserID];
+    [self.userDefaults setObject:timestamp forKey:cacheKey];
+}
+
+- (nullable NSDate *)purchaserInfoCachesLastUpdatedForAppUserID:(NSString *)appUserID {
+    NSString *cacheKey = [self purchaserInfoLastUpdatedCacheKeyForAppUserID:appUserID];
+    return (NSDate * _Nullable) [self.userDefaults objectForKey:cacheKey];
 }
 
 - (NSString *)purchaserInfoUserDefaultCacheKeyForAppUserID:(NSString *)appUserID {
     return [RCPurchaserInfoAppUserDefaultsKeyBase stringByAppendingString:appUserID];
+}
+
+- (NSString *)purchaserInfoLastUpdatedCacheKeyForAppUserID:(NSString *)appUserID {
+    return [RCPurchaserInfoLastUpdatedKeyBase stringByAppendingString:appUserID];
 }
 
 #pragma mark - offerings
@@ -155,8 +191,9 @@ NSString *RCSubscriberAttributesKey = RC_CACHE_KEY_PREFIX @".subscriberAttribute
     [self.offeringsCachedObject cacheInstance:offerings];
 }
 
-- (BOOL)isOfferingsCacheStale {
-    return self.offeringsCachedObject.isCacheStale;
+- (BOOL)isOfferingsCacheStaleWithIsAppBackgrounded:(BOOL)isAppBackgrounded {
+    int cacheDurationInSeconds = [self cacheDurationInSecondsWithIsAppBackgrounded:isAppBackgrounded];
+    return [self.offeringsCachedObject isCacheStaleWithDurationInSeconds:cacheDurationInSeconds];
 }
 
 - (void)clearOfferingsCacheTimestamp {
@@ -223,10 +260,6 @@ NSString *RCSubscriberAttributesKey = RC_CACHE_KEY_PREFIX @".subscriberAttribute
             if (!attribute.isSynced) {
                 unsyncedAttributesByKey[attribute.key] = attribute;
             }
-        }
-        RCLog(@"found %lu unsynced attributes for appUserID: %@", unsyncedAttributesByKey.count, appUserID);
-        if (unsyncedAttributesByKey.count > 0) {
-            RCLog(@"unsynced attributes: %@", unsyncedAttributesByKey);
         }
         return unsyncedAttributesByKey;
     }
@@ -369,6 +402,29 @@ NSString *RCSubscriberAttributesKey = RC_CACHE_KEY_PREFIX @".subscriberAttribute
 - (NSString *)legacySubscriberAttributesCacheKeyForAppUserID:(NSString *)appUserID {
     NSString *attributeKey = [NSString stringWithFormat:@"%@", appUserID];
     return [RCLegacySubscriberAttributesKeyBase stringByAppendingString:attributeKey];
+}
+
+#pragma mark - attribution
+
+- (nullable NSDictionary *)latestNetworkAndAdvertisingIdsSentForAppUserID:(NSString *)appUserID {
+    NSString *cacheKey = [self attributionDataCacheKeyForAppForAppUserID:appUserID];
+    return [self.userDefaults objectForKey:cacheKey];
+}
+
+- (void)setLatestNetworkAndAdvertisingIdsSent:(nullable NSDictionary *)latestNetworkAndAdvertisingIdsSent
+                                 forAppUserID:(nullable NSString *)appUserID {
+    NSString *cacheKey = [self attributionDataCacheKeyForAppForAppUserID:appUserID];
+    [self.userDefaults setObject:latestNetworkAndAdvertisingIdsSent
+                          forKey:cacheKey];
+}
+
+- (void)clearLatestNetworkAndAdvertisingIdsSentForAppUserID:(nullable NSString *)appUserID {
+    NSString *cacheKey = [self attributionDataCacheKeyForAppForAppUserID:appUserID];
+    [self.userDefaults removeObjectForKey:cacheKey];
+}
+
+- (NSString *)attributionDataCacheKeyForAppForAppUserID:(NSString *)appUserID {
+    return [RCAttributionDataDefaultsKeyBase stringByAppendingString:appUserID];
 }
 
 @end

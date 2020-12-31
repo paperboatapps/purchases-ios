@@ -17,10 +17,13 @@
 #define APP_WILL_RESIGN_ACTIVE_NOTIFICATION_NAME NSExtensionHostWillResignActiveNotification
 #endif
 
-#if TARGET_OS_IPHONE
+#if TARGET_OS_IOS || TARGET_OS_TV || TARGET_OS_MACCATALYST
 #import <UIKit/UIKit.h>
 #elif TARGET_OS_OSX
 #import <AppKit/AppKit.h>
+#elif TARGET_OS_WATCH
+#import <UIKit/UIKit.h>
+#import <WatchKit/WatchKit.h>
 #endif
 
 #if TARGET_OS_MACCATALYST
@@ -42,6 +45,15 @@
 #else
 #define UI_DEVICE_AVAILABLE 0
 #endif
+
+// Should match available platforms in
+// https://developer.apple.com/documentation/watchkit/wkinterfacedevice?language=objc
+#if TARGET_OS_WATCH
+#define WKINTERFACE_DEVICE_AVAILABLE 1
+#else
+#define WKINTERFACE_DEVICE_AVAILABLE 0
+#endif
+
 
 // Should match available platforms in
 // https://developer.apple.com/documentation/iad/adclient?language=objc

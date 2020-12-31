@@ -17,12 +17,17 @@
     RCDeviceCache,
     RCIdentityManager,
     RCSubscriberAttributesManager,
-    RCSystemInfo;
+    RCSystemInfo,
+    RCOperationDispatcher,
+    RCIntroEligibilityCalculator,
+    RCReceiptParser;
+
+#import "RCStoreKitWrapper.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
 
-@interface RCPurchases (Protected)
+@interface RCPurchases (Protected) <RCStoreKitWrapperDelegate>
 
 - (instancetype)initWithAppUserID:(nullable NSString *)appUserID
                    requestFetcher:(RCStoreKitRequestFetcher *)requestFetcher
@@ -31,14 +36,18 @@ NS_ASSUME_NONNULL_BEGIN
                           backend:(RCBackend *)backend
                   storeKitWrapper:(RCStoreKitWrapper *)storeKitWrapper
                notificationCenter:(NSNotificationCenter *)notificationCenter
-                     userDefaults:(NSUserDefaults *)userDefaults
                        systemInfo:(RCSystemInfo *)systemInfo
                  offeringsFactory:(RCOfferingsFactory *)offeringsFactory
                       deviceCache:(RCDeviceCache *)deviceCache
                   identityManager:(RCIdentityManager *)identityManager
-      subscriberAttributesManager:(RCSubscriberAttributesManager *)subscriberAttributesManager;
+      subscriberAttributesManager:(RCSubscriberAttributesManager *)subscriberAttributesManager
+              operationDispatcher:(RCOperationDispatcher *)operationDispatcher
+       introEligibilityCalculator:(RCIntroEligibilityCalculator *)introEligibilityCalculator
+                    receiptParser:(RCReceiptParser *)receiptParser;
 
 + (void)setDefaultInstance:(nullable RCPurchases *)instance;
+
+- (void)_setPushTokenString:(nullable NSString *)pushToken;
 
 @property (nonatomic) RCDeviceCache *deviceCache;
 @property (nonatomic) RCBackend *backend;
