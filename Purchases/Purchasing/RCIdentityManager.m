@@ -7,6 +7,7 @@
 #import "RCLogUtils.h"
 #import "RCBackend.h"
 #import "RCPurchasesErrorUtils.h"
+@import PurchasesCoreSwift;
 
 
 @interface RCIdentityManager ()
@@ -68,12 +69,12 @@
 - (void)createAlias:(NSString *)alias withCompletionBlock:(void (^)(NSError *_Nullable error))completion {
     NSString *currentAppUserID = self.currentAppUserID;
     if (!currentAppUserID) {
-        RCDebugLog(@"Couldn't create an alias because the currentAppUserID is null. "
+        RCWarnLog(@"Couldn't create an alias because the currentAppUserID is null. "
                    "This might happen if the entry in UserDefaults is missing.");
         completion(RCPurchasesErrorUtils.missingAppUserIDError);
         return;
     }
-    RCDebugLog(@"Creating an alias to %@ from %@", currentAppUserID, alias);
+    RCDebugLog(@"Creating an alias from %@ to %@", currentAppUserID, alias);
     [self.backend createAliasForAppUserID:currentAppUserID withNewAppUserID:alias completion:^(NSError *_Nullable error) {
         if (error == nil) {
             RCDebugLog(@"Alias created");

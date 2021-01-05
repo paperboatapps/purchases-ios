@@ -18,24 +18,32 @@ func resolveDependencies() -> [Package.Dependency] {
 }
 
 func resolveTargets() -> [Target] {
+    let objcSources = ["Purchases/Info.plist",
+                       "Purchases/Caching",
+                       "Purchases/FoundationExtensions",
+                       "Purchases/Misc",
+                       "Purchases/Networking",
+                       "Purchases/Public",
+                       "Purchases/Purchasing",
+                       "Purchases/ProtectedExtensions",
+                       "Purchases/SubscriberAttributes",
+                       "Purchases/SwiftInterfaces"]
+    let infoPlist = "Purchases/Info.plist"
+    let swiftSources = "Purchases/SwiftSources"
+    
     let baseTargets: [Target] = [
         .target(name: "Purchases",
-                dependencies: [],
+                dependencies: ["PurchasesCoreSwift"],
                 path: ".",
-                exclude: ["Purchases/Info.plist"],
+                exclude: [infoPlist, swiftSources],
                 sources: ["Purchases"],
                 publicHeadersPath: "Purchases/Public",
-                cSettings: [
-                    .headerSearchPath("Purchases"),
-                    .headerSearchPath("Purchases/Caching"),
-                    .headerSearchPath("Purchases/FoundationExtensions"),
-                    .headerSearchPath("Purchases/Misc"),
-                    .headerSearchPath("Purchases/Networking"),
-                    .headerSearchPath("Purchases/Public"),
-                    .headerSearchPath("Purchases/Purchasing"),
-                    .headerSearchPath("Purchases/ProtectedExtensions"),
-                    .headerSearchPath("Purchases/SubscriberAttributes"),
-    ])]
+                cSettings: objcSources.map { CSetting.headerSearchPath($0) }
+        ),
+        .target(name: "PurchasesCoreSwift",
+                dependencies: [],
+                path: ".",
+                sources: ["PurchasesCoreSwift"])]
 
     if shouldTest {
         let testTargets: [Target] = [

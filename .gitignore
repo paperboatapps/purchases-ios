@@ -28,5 +28,8 @@ Carthage
 .build/
 CarthageUploads
 *.bck
-fastlane/report.xml
-CHANGELOG.latest.md
+**/fastlane/report.xml
+**/fastlane/test_output/
+builds/
+Pods/
+IntegrationTests/CarthageIntegration/Cartfile.resolved

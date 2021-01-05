@@ -56,15 +56,16 @@ class MockDeviceCache: RCDeviceCache {
         return cachedPurchaserInfo[appUserID];
     }
 
-    override func isPurchaserInfoCacheStale() -> Bool {
+    override func isPurchaserInfoCacheStale(forAppUserID appUserID: String,
+                                            isAppBackgrounded: Bool) -> Bool {
         return stubbedIsPurchaserInfoCacheStale
     }
 
-    override func clearPurchaserInfoCacheTimestamp() {
+    override func clearPurchaserInfoCacheTimestamp(forAppUserID appUserID: String) {
         clearPurchaserInfoCacheTimestampCount += 1
     }
 
-    override func setPurchaserInfoCacheTimestampToNow() {
+    override func setPurchaserInfoCacheTimestampToNowForAppUserID(_ appUserID: String) {
         setPurchaserInfoCacheTimestampToNowCount += 1
     }
 
@@ -85,7 +86,7 @@ class MockDeviceCache: RCDeviceCache {
         cachedOfferingsCount += 1
     }
 
-    override func isOfferingsCacheStale() -> Bool {
+    override func isOfferingsCacheStale(withIsAppBackgrounded isAppBackgrounded: Bool) -> Bool {
         return stubbedIsOfferingsCacheStale
     }
 
@@ -196,5 +197,19 @@ class MockDeviceCache: RCDeviceCache {
         invokedDeleteAttributesIfSyncedCount += 1
         invokedDeleteAttributesIfSyncedParameters = (appUserID, ())
         invokedDeleteAttributesIfSyncedParametersList.append(appUserID)
+    }
+
+
+    var invokedClearPurchaserInfoCache = false
+    var invokedClearPurchaserInfoCacheCount = 0
+    var invokedClearPurchaserInfoCacheParameters: (appUserID: String, Void)?
+    var invokedClearPurchaserInfoCacheParametersList = [(appUserID: String, Void)]()
+
+    override func clearPurchaserInfoCache(forAppUserID appUserID: String) {
+        cachedPurchaserInfo.removeValue(forKey: appUserID)
+        invokedClearPurchaserInfoCache = true
+        invokedClearPurchaserInfoCacheCount += 1
+        invokedClearPurchaserInfoCacheParameters = (appUserID, ())
+        invokedClearPurchaserInfoCacheParametersList.append((appUserID, ()))
     }
 }

@@ -17,6 +17,7 @@
 #include <Purchases/RCPackage.h>
 #include <Purchases/RCIntroEligibility+Protected.h>
 #include <Purchases/RCAttributionFetcher.h>
+#include <Purchases/RCAttributionFetcher+Protected.h>
 #include <Purchases/RCAttributionData.h>
 #include <Purchases/RCPromotionalOffer+Protected.h>
 #include <Purchases/RCOfferingsFactory.h>
@@ -41,3 +42,4 @@
 #include <Purchases/RCISOPeriodFormatter.h>
 #include <Purchases/RCProductInfo.h>
 #include <Purchases/RCProductInfoExtractor.h>
+#include <Purchases/NSDictionary+RCExtensions.h>

@@ -33,11 +33,13 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)cachePurchaserInfo:(NSData *)data forAppUserID:(NSString *)appUserID;
 
-- (BOOL)isPurchaserInfoCacheStale;
+- (BOOL)isPurchaserInfoCacheStaleForAppUserID:(NSString *)appUserID isAppBackgrounded:(BOOL)isAppBackgrounded;
 
-- (void)clearPurchaserInfoCacheTimestamp;
+- (void)clearPurchaserInfoCacheTimestampForAppUserID:(NSString *)appUserID;
 
-- (void)setPurchaserInfoCacheTimestampToNow;
+- (void)clearPurchaserInfoCacheForAppUserID:(NSString *)appUserID;
+
+- (void)setPurchaserInfoCacheTimestampToNowForAppUserID:(NSString *)appUserID;
 
 #pragma mark - offerings
 
@@ -45,7 +47,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)cacheOfferings:(RCOfferings *)offerings;
 
-- (BOOL)isOfferingsCacheStale;
+- (BOOL)isOfferingsCacheStaleWithIsAppBackgrounded:(BOOL)isAppBackgrounded;
 
 - (void)clearOfferingsCacheTimestamp;
 
@@ -69,6 +71,15 @@ NS_ASSUME_NONNULL_BEGIN
 - (NSDictionary<NSString *, RCSubscriberAttributeDict> *)unsyncedAttributesForAllUsers;
 
 - (void)deleteAttributesIfSyncedForAppUserID:(NSString *)appUserID;
+
+#pragma mark - attribution
+
+- (nullable NSDictionary *)latestNetworkAndAdvertisingIdsSentForAppUserID:(NSString *)appUserID;
+
+- (void)setLatestNetworkAndAdvertisingIdsSent:(nullable NSDictionary *)latestNetworkAndAdvertisingIdsSent
+                                 forAppUserID:(nullable NSString *)appUserID;
+
+- (void)clearLatestNetworkAndAdvertisingIdsSentForAppUserID:(nullable NSString *)appUserID;
 
 @end
 

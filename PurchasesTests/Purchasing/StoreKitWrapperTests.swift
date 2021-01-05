@@ -36,7 +36,6 @@ class MockPaymentQueue: SKPaymentQueue {
 }
 
 class StoreKitWrapperTests: XCTestCase, RCStoreKitWrapperDelegate {
-
     let paymentQueue = MockPaymentQueue()
 
     var wrapper: RCStoreKitWrapper?
@@ -68,6 +67,12 @@ class StoreKitWrapperTests: XCTestCase, RCStoreKitWrapperDelegate {
         return shouldAddPromo
     }
 
+    var productIdentifiersWithRevokedEntitlements: [String]?
+
+    func storeKitWrapper(_ storeKitWrapper: RCStoreKitWrapper, didRevokeEntitlementsForProductIdentifiers productIdentifiers: [String]) {
+        productIdentifiersWithRevokedEntitlements = productIdentifiers
+    }
+
     func testObservesThePaymentQueue() {
         expect(self.paymentQueue.observers.count).to(equal(1))
     }
@@ -92,16 +97,17 @@ class StoreKitWrapperTests: XCTestCase, RCStoreKitWrapperDelegate {
         expect(self.updatedTransactions).to(contain(transaction))
     }
     
+    @available(iOS 11.0, *)
     func testCallsDelegateWhenPromoPurchaseIsAvailable() {
         let product = SKProduct.init();
         let payment = SKPayment.init(product: product)
         
         wrapper?.paymentQueue(paymentQueue, shouldAddStorePayment: payment, for: product)
-        
         expect(self.promoPayment).to(be(payment));
         expect(self.promoProduct).to(be(product))
     }
     
+    @available(iOS 11.0, *)
     func testPromoDelegateMethodPassesBackReturnValueFromOwnDelegate() {
         let product = SKProduct.init();
         let payment = SKPayment.init(product: product)
@@ -165,5 +171,20 @@ class StoreKitWrapperTests: XCTestCase, RCStoreKitWrapperDelegate {
 
         expect(self.paymentQueue.observers.count).to(equal(1))
 
+    }
+
+    func testDidRevokeEntitlementsForProductIdentifiersCallsDelegateWithRightArguments() {
+        #if swift(>=5.3)
+        if #available(iOS 14.0, macOS 14.0, tvOS 14.0, watchOS 7.0, *) {
+            expect(self.productIdentifiersWithRevokedEntitlements).to(beNil())
+            let revokedProductIdentifiers = [
+                "mySuperProduct",
+                "theOtherProduct"
+            ]
+
+            wrapper?.paymentQueue(paymentQueue, didRevokeEntitlementsForProductIdentifiers: revokedProductIdentifiers)
+            expect(self.productIdentifiersWithRevokedEntitlements) == revokedProductIdentifiers
+        }
+        #endif
     }
 }

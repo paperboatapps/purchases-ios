@@ -9,6 +9,7 @@
 #import <StoreKit/StoreKit.h>
 #import "RCStoreKitRequestFetcher.h"
 #import "RCLogUtils.h"
+@import PurchasesCoreSwift;
 
 @implementation RCProductsRequestFactory : NSObject
 - (SKProductsRequest *)requestForProductIdentifiers:(NSSet<NSString *> *)identifiers
@@ -134,6 +135,7 @@
             receiptHandler();
         }
     }
+    [request cancel];
 }
 
 - (void)request:(SKRequest *)request didFailWithError:(NSError *)error
@@ -151,6 +153,7 @@
             handler(@[]);
         }
     }
+    [request cancel];
 }
 
 - (void)productsRequest:(SKProductsRequest *)request didReceiveResponse:(SKProductsResponse *)response
@@ -164,7 +167,7 @@
     RCDebugLog(@"Invalid Product Identifiers - %@", response.invalidProductIdentifiers);
     
     NSArray<RCFetchProductsCompletionHandler> *handlers = [self finishProductsRequest:request];
-    RCDebugLog(@"%d completion handlers waiting on products", handlers.count);
+    RCDebugLog(@"%lu completion handlers waiting on products", (unsigned long)handlers.count);
     for (RCFetchProductsCompletionHandler handler in handlers)
     {
         handler(response.products);
